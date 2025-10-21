@@ -1,0 +1,36 @@
+Changelog – Actualización DDMR Sensores IR y Control de Motores
+================================================================
+
+Autor: Kevinini
+
+Objetivo de la actualización:
+-----------------------------
+Actualizar el código del robot para que sea compatible con librerías modernas y el gestor actual de ESP32, mejorar la legibilidad, la modularización y la comprensión del código, manteniendo la funcionalidad original de calibración de sensores IR, control de motores y cálculo de posición.
+
+Resumen de cambios por archivo:
+-------------------------------
+
+1. prueba_sensorIR:
+   - Librerías: reemplazo de <Encoder.h> y analogWrite por <ESP32Encoder.h> y ledcAttach/ledcWrite.
+   - Pines y constantes: definidos con constexpr para mayor claridad.
+   - Setup modularizado: funciones configurarMUX(), configurarDriver(), configurarEncoder().
+   - Loop: cálculo de ángulos frontal y posterior con getposition(), impresión opcional para depuración.
+
+2. actuadores:
+   - Función motor(): reemplazo de analogWrite por ledcWrite, control de límites de velocidad, simplificación de lógica de giro y detención.
+   - Pines definidos como constantes, separación clara de motor derecho e izquierdo.
+
+3. sensores:
+   - calibrarSensores(): realiza 2 vueltas exactas según encoders, luego alinea sensor central frontal; incluye verificación de media vuelta (o mas) extra para evitar bloqueo o giros indefinidos cuando no detecta bien la trayectoria.
+   - setMaxMin(): modulariza actualización de máximos y mínimos.
+   - getposition(): modularizado para frontal/posterior, usa calcularNivelSensor().
+   - seleccionarCanalMUX(): centraliza selección de canal del MUX.
+   - calcularNivelSensor(): evita NaN por division por cero, aplica umbral de ruido y normalización segura.
+
+Motivo general de los cambios:
+-----------------------------
+- Compatibilidad con librerías modernas de ESP32.
+- Código más legible, modular y mantenible.
+- Calibración y alineación más robustas y seguras.
+- Prevención de errores por NaN o divisiones por cero.
+- Preparación para futuras extensiones.

@@ -1,0 +1,57 @@
+CHANGELOG – Prueba de Motores RUPU
+==================================
+
+Autor: Kevinini
+
+Versión antigua:
+----------------
+- Core ESP32: compatible con versiones antiguas del gestor (1.x).
+- Librería PWM: uso de analogWrite.h para generar PWM en los pines de los motores.
+- Pines de control: definiciones ain1, ain2, bin1, bin2, pwm_a, pwm_b.
+- Función motor(Vel_izq, Vel_der):
+    - Controla dirección y velocidad de los motores mediante señales PWM.
+    - Rango de entrada: [-1023, 1023] 10 bits, se puede cambiar en el codigo.
+    - Configuración de pines dentro de la función.
+- Loop principal:
+    - Valores fijos de velocidad (ej. motor(200,200)).
+    - No permite ingreso dinámico de valores por consola.
+- Limitaciones:
+    - Dependencia de la librería analogWrite, que no es nativa del ESP32 Core moderno.
+    - Sin interacción serial.
+    - Pines y canal PWM no gestionados de forma profesional (no se usan canales LEDC).
+
+Versión nueva (actualizada a ESP32 Core 3.3.1):
+-------------------------------------------------
+- Core ESP32 actualizado a 3.3.1.
+- Librería PWM:
+    - Reemplazo de analogWrite por LEDC nativo del ESP32.
+    - Uso de ledcAttach(pin, frecuencia, resolución) para configurar PWM.
+    - Uso de ledcWrite(pin, valor) para establecer ciclo de trabajo.
+- Pines de control:
+    - Renombrados para mayor claridad: PIN_CONTROL_MOTOR_DER_AIN1, PIN_PWM_MOTOR_DER, etc.
+- Función motor(Velocidad_Motor_Izquierdo, Velocidad_Motor_Derecho):
+    - Configura los pines de control y PWM.
+    - Limita valores al rango [-RESOLUCION_PWM, RESOLUCION_PWM].
+    - Aplica dirección y velocidad usando LEDC.
+- Nueva funcionalidad:
+    - Ingreso de velocidades dinámicas desde consola Serial.
+    - Función lectura() para parsear entradas en formato "Vel_IZQ,Vel_DER".
+    - Entrada serial validada parcialmente (coma separadora, se eliminan espacios).
+- Loop principal:
+    - Llama a lectura() para actualizar velocidades desde Serial.
+    - Llama a motor() con los valores ingresados.
+- Mejoras de legibilidad y mantenimiento:
+    - Variables descriptivas.
+    - Separación de responsabilidades (función lectura, motor).
+- Beneficio principal:
+    - Permite probar dinámicamente cualquier velocidad de los motores.
+    - Compatible con las versiones modernas del ESP32 Core sin dependencias externas de PWM.
+
+Resumen de cambios críticos:
+-----------------------------
+1. Migración de analogWrite a LEDC nativo.
+2. Renombramiento de pines y variables para mayor claridad.
+3. Separación de lectura serial y control de motores en funciones distintas.
+4. Agregado de interacción por consola para ingresar velocidades de manera dinámica.
+5. Ajuste de límites de PWM dentro de la función motor().
+6. Preparación del código para futuras actualizaciones del RUPU y nuevas librerías.

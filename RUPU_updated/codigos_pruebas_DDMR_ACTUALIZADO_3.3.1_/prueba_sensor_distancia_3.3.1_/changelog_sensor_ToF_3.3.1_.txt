@@ -1,0 +1,62 @@
+CHANGELOG – Sensor de Distancia VL53L0X
+======================================
+
+
+Autor: Kevinini
+
+Versión antigua:
+----------------
+- Librerías:
+    - Wire.h
+    - VL53L0X.h
+- Pines y configuración:
+    - Offset fijo definido mediante #define offset_sensor
+- Función configuracion_sensor_d():
+    - Inicializa el sensor VL53L0X
+    - Configura límite de señal y tiempo de medición
+    - Inicia medición continua
+- Función distancia():
+    - Lee distancia desde registro del sensor
+    - Convierte a cm y aplica offset
+    - Filtra valores inválidos mediante contador (cuenta)
+    - Saturación máxima a 80 cm
+- Loop principal:
+    - Llama a configuracion_sensor_d() en setup
+    - Llama a distancia() en loop y muestra valor en Serial
+- Limitaciones:
+    - Offset fijo, no se puede cambiar en tiempo real
+    - Variables globales con nombres poco descriptivos (Input_d, cuenta)
+    - Lógica de filtrado mezclada con lectura
+    - Código menos legible y difícil de mantener
+
+Versión nueva:
+---------------
+- Librerías:
+    - Wire.h
+    - VL53L0X.h
+- Variables globales más descriptivas:
+    - OFFSET_SENSOR_CM, DISTANCIA_MAXIMA_CM, DISTANCIA_MINIMA_CM, FILTRO_MUESTRAS
+    - distanciaActual, contadorFiltro
+- Función InicializarSensor(sensor):
+    - Recibe referencia al objeto VL53L0X
+    - Configura sensor, límites de señal y tiempo de medición
+    - Inicia medición continua
+- Función leerDistancia(sensor):
+    - Lee registro directamente
+    - Aplica conversión a cm y offset dinámico
+    - Saturación máxima más clara
+    - Filtrado de muestras válido usando contador y número de repeticiones
+- Nueva funcionalidad:
+    - Función leerOffsetSerial() permite modificar el offset del sensor en tiempo real desde consola Serial
+- Loop principal:
+    - Llama a leerOffsetSerial() para actualización dinámica del offset
+    - Llama a leerDistancia(sensor) y muestra valor en Serial
+- Mejoras de legibilidad y mantenimiento:
+    - Separación clara de responsabilidades: inicialización, lectura, filtrado, y entrada Serial
+    - Nombres de variables claros y consistentes
+    - Preparado para futuras ampliaciones: ajuste dinámico de parámetros
+- Beneficio principal:
+    - Codigo utilizable para las versiones actuales del gestor y librerias
+    - Offset configurable dinámicamente
+    - Código más entendible, mantenible y profesional
+

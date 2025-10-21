@@ -1,0 +1,70 @@
+Changelog – Actualización DDMR Sensores IR y Control de Motores
+================================================================
+
+Versión: Actualización reciente
+Fecha: 21-09-2025
+Autor: Kevin Fuentes
+
+Objetivo de la actualización:
+-----------------------------
+Actualizar el código del robot para que sea compatible con librerías modernas y el gestor actual de ESP32, mejorar la legibilidad, la modularización y la comprensión del código, manteniendo la funcionalidad original de calibración de sensores IR, control de motores y cálculo de posición.
+
+Resumen de cambios principales:
+-------------------------------
+1. **Actualización de librerías y estructura del código**
+   - Antiguo: se utilizaba la librería <Encoder.h> y funciones como encoder.read() y encoder.write().
+   - Nuevo: se utiliza la librería <ESP32Encoder.h>, que permite attachFullQuad(), clearCount() y un manejo más estable de los encoders en ESP32. Esto garantiza compatibilidad con el gestor moderno de placas ESP32.
+   - Beneficio: mayor estabilidad, compatibilidad y mantenimiento a largo plazo.
+
+2. **Control de motores y PWM**
+   - Antiguo: uso de analogWrite(), macros para pines y resolución de PWM estática.
+   - Nuevo: uso de ledcAttach() y ledcWrite(), pines definidos como constexpr y límites de PWM integrados dentro de la función de control de motores.
+   - Cambios internos: se limita automáticamente la velocidad al rango permitido, se maneja el sentido de giro con lógica clara y separada para cada motor.
+   - Beneficio: código más legible, modular y menos propenso a errores de saturación de PWM.
+
+3. **Calibración de sensores IR**
+   - Antiguo: calibración simple con while que gira el robot 2 vueltas, sin control de media vuelta extra; alineación manual con la línea central.
+   - Nuevo: calibración que realiza exactamente 2 vueltas según encoders, luego verifica alineación del sensor central frontal con la trayectoria. Se agrega condición de seguridad: si no encuentra la línea tras media vuelta extra, se detiene automáticamente.
+   - Cambios internos: definición de umbral de ruido (UMBRAL_RUIDO), funciones setMaxMin() para modularizar la actualización de máximos y mínimos.
+   - Beneficio: calibración más confiable y robusta, evita bloqueos si el robot empieza sobre superficie homogénea o línea no detectada.
+
+4. **Cálculo de posición de la trayectoria (getposition)**
+   - Antiguo: lógica mezclada, cálculo directo dentro de bucles y repetido para frontal/posterior.
+   - Nuevo: función modularizada que recibe un argumento frontal/posterior, llama a calcularNivelSensor() para cada sensor y calcula posición ponderada en [mm]. Maneja correctamente casos de salida de trayectoria (área total = 0).
+   - Beneficio: código más limpio, entendible y fácil de depurar. Separación clara de responsabilidades.
+
+5. **Gestión de MUX y sensores**
+   - Antiguo: selección de canal MUX repetida para cada sensor con digitalWrite().
+   - Nuevo: función seleccionarCanalMUX(byte canal), que centraliza la lógica de selección de canal, reutilizable para los 16 sensores.
+   - Beneficio: modularización, menor riesgo de errores y mayor claridad.
+
+6. **Prevención de errores y robustez**
+   - Antiguo: posibilidad de NaN o división por cero en getposition().
+   - Nuevo: se evita división por cero en calcularNivelSensor(), se aplica umbral de ruido y se devuelve 0 si lectura mínima para la normalización no está disponible.
+   - Beneficio: evita que el robot se quede bloqueado en superficies uniformes o lecturas extremas.
+
+7. **Legibilidad y claridad**
+   - Antiguo: macros y nombres poco descriptivos, código mezclado de motores, sensores y lógica principal.
+   - Nuevo: constantes descriptivas (constexpr), funciones separadas por tarea (actuadores, sensores, MUX, cálculo de posición), comentarios claros y consistentes.
+   - Beneficio: facilita la comprensión, mantenimiento y futuras modificaciones.
+
+8. **Pequeñas mejoras y detalles adicionales**
+   - Ajuste de nombres de variables para que sean consistentes con su función (ej: Velocidad_Motor_Izquierdo vs Velocidad_motor_izq).
+   - Constantes físicas del robot (radio ruedas, distancia entre ruedas, reducción) definidas como constexpr.
+   - Comentarios explicativos sobre fórmulas y cálculos de posición, ángulo girado y áreas de sensores.
+   - Inclusión de mensajes Serial para depuración durante la calibración y alineación, opcionales para pruebas.
+
+Impacto de la actualización:
+----------------------------
+- Código compatible con librerías modernas de ESP32 y su gestor.
+- Mayor estabilidad del robot durante calibración y funcionamiento.
+- Calibración de sensores más confiable y alineación automática segura.
+- Código más modular, legible y entendible, preparado para futuras extensiones y mejoras.
+- Prevención de errores por NaN o divisiones por cero, manejo robusto de superficies homogéneas.
+- Preparación para agregar más sensores o cambiar la lógica de control sin afectar la estructura principal.
+
+Notas adicionales:
+-----------------
+- El código mantiene la funcionalidad original: medición de posición de la línea, calibración de sensores IR, control de motores en DDMR.
+- Se recomienda seguir usando Serial.print para depuración hasta verificar comportamiento en terreno.
+

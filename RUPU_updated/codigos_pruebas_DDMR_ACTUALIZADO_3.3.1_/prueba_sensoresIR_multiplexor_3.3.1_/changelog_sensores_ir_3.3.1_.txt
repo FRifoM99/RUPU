@@ -1,0 +1,30 @@
+CHANGELOG – Prueba Sensores IR con MUX CD74HC4067
+==================================
+
+Autor: Kevinini
+
+Versión antigua:
+-------------------
+- Código monolítico con todo en setup() y loop().
+- Pines del multiplexor definidos directamente con números magicos en pinMode() y digitalWrite().
+- Bucle for recorre los canales del MUX y realiza analogRead() directamente.
+- Nombres de variables y pines poco descriptivos.
+- No modular
+Versión nueva:
+-------------------
+- Código modularizado con funciones:
+  - configurarMUX() → inicializa pines de control.
+  - seleccionarCanal(byte canal) → selecciona un canal específico del multiplexor.
+  - leerSensores() → recorre todos los canales y realiza lectura analógica de manera organizada.
+- Pines del multiplexor y señal definidos con constantes descriptivas (MUX_PIN_S0, MUX_PIN_SIGNAL, etc.).
+- Variables y funciones con nombres claros y coherentes con su función.
+- Estructura profesional y fácil de mantener, sin depender de librerías externas.
+
+Resumen de cambios críticos:
+-----------------------------
+1. Modularización del código en funciones para mayor claridad y mantenimiento.
+2. Definición de pines y constantes con nombres descriptivos.
+3. Separación de responsabilidades: configuración de MUX, selección de canal y lectura de sensores.
+4. Legibilidad mejorada: comentarios, indentación y nombres claros.
+5. Preparado para futuras ampliaciones y compatible con todas las versiones modernas del gestor de ESP32.
+

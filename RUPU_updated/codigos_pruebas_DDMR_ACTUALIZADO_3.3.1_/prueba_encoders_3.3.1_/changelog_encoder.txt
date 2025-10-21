@@ -1,0 +1,76 @@
+📄 Documento de cambios – Migración de Encoder.h a ESP32Encoder.h
+
+
+Autor: Kevinini
+---
+
+### 1. Contexto
+El código original utilizaba la librería "Encoder.h", la cual no es 100% compatible con ESP32 y dependía de versiones antiguas del gestor de placa (1.0.4).  
+Con la actualización al gestor **ESP32 v3.3.1**, se optó por migrar a la librería **ESP32Encoder**, diseñada específicamente para esta plataforma y con soporte completo.  
+
+---
+
+### 2. Cambios principales
+1.  Librería:
+   - Antes: #include <Encoder.h>
+   - Ahora: #include <ESP32Encoder.h> Ultima version 0.11.8 a la fecha 21.09.25
+
+2. **Declaración de objetos:**
+   - Antes: Encoder encoder_izq(pinA, pinB);
+   - Ahora: ESP32Encoder encoder_izq;
+     	    ESP32Encoder encoder_der;
+
+
+3. **Configuración de resistencias internas:**
+   - Nueva función en ESP32Encoder:
+""
+     ESP32Encoder::useInternalWeakPullResistors = puType::up;
+""
+     Esto activa resistencias pull-up internas.
+
+4. **Método de conexión de pines:**
+   - Antes: los pines se definían al crear el objeto.
+   - Ahora: se deben poner explícitamente con el método:
+""
+     encoder_izq.attachFullQuad(23, 5);
+     encoder_der.attachFullQuad(19, 18);
+""
+     > attachFullQuad() configura el conteo en modo cuadratura completa (x4), obteniendo la máxima resolución del encoder.
+tambien son opciones utilizar attachHalfQuad que configura en modo media cuadratura(x2)
+y attachSingleEdge() que cuenta 1 flanco por ciclo (x1)
+
+5. **Inicialización de contadores:**
+   - Antes: no era obligatorio reiniciar manualmente.
+   - Ahora: se recomienda limpiar al inicio con:
+""
+     encoder_izq.clearCount();
+     encoder_der.clearCount();
+""
+
+6. **Lectura de valores:**
+   - Antes: encoder.read();
+   - Ahora: encoder.getCount();
+
+---
+
+### 3. Beneficios de la migración
+- Compatibilidad total con ESP32 y su nuevo gestor de placas (3.3.1).
+- Mayor estabilidad en la lectura de encoders.
+- Control explícito sobre pull-ups internas.
+- Opción de elegir entre FullQuad y HalfQuad, según precisión y carga de CPU.
+- Funciones más claras para resetear y leer contadores.  
+
+---
+
+### 4. Ejemplo de uso actualizado
+
+ESP32Encoder::useInternalWeakPullResistors = puType::up;
+encoder_izq.attachFullQuad(23, 5);
+encoder_der.attachFullQuad(19, 18);
+
+Serial.print(encoder_izq.getCount());
+Serial.print(" - ");
+Serial.println(encoder_der.getCount());
+
+
+---
