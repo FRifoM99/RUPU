@@ -1,0 +1,59 @@
+RUPU — DOCUMENTACIÓN FUNCIONES DE MOTOR y PID 
+
+1)FUNCIÓN DE MOTOR: void motor(int vel_izq, int vel_der)
+
+Parámetros
+
+- vel_izq: Entrada para la rueda izquierda en el rango [-1023, 1023] (10-bit) (control Duty Cycle).
+- vel_der: Entrada para la rueda derecha, en el rango [-1023, 1023].
+
+Pines (este proyecto, puede variar)
+
+- Derecho (canal A): ain1=16, ain2=27, pwm_a=17
+- Izquierdo (canal B): bin1=13, bin2=12, pwm_b=14
+
+Especificaciones
+
+- Resolución PWM: 10-bit (0..1023).
+- Frecuencia PWM: 500 Hz.
+- Valores fuera de rango se saturan a [-1023, 1023].
+- El signo define la dirección; la magnitud es el duty 0..1023.
+
+Ejemplos
+
+motor(+1023, +1023);  // ambos adelante al máximo
+motor(0, 0);          // detener
+motor(-400, +400);    // giro en el lugar
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+2)FUNCIÓN PID DE VELOCIDAD: float funcion_PID(float referencia_cm_s, float Kp, float Ki, float Kd)
+
+Propósito: Controlar velocidad de la rueda (con retroalimentación encoder) y devolver la actuación para el motor (planta).
+
+Parámetros
+
+- referencia_cm_s: referencia en cm/s.
+- Kp, Ki, Kd: Parametros del PID.
+- Retorno float actuación 
+
+Variables Globales/Dependencias (usadas por la función y definidas en la Prueba)
+
+- Encoder encoder_der(...) (objeto del encoder).
+- const uint16_t Tiempo_muestreo o Ts (ms) .
+
+- Conversión fija de velocidades del código: CPR = 2800, R = 0.0215 m (ajusta en el código si tu hardware cambia).
+
+PID discreto utilizado (retentor orden 0):
+
+- u[k] = u[k-1] + (Kp+Kd/Ts)*e[k] + (-Kp+Ki*Ts-2*Kd/Ts)*e[k-1] + (Kd/Ts)*e[k-2];
+
+Ejemplo de uso (en loop, cada Tiempo_muestreo)
+
+float referencia_cm_s = 10; // Valor deseado (referencia) 10 cm/s
+float u = funcion_PID(referencia_cm_s, Kp, Ki, Kd);
+motor(0, (int)u);  // aplica en la rueda derecha
+
+Notas
+- Llamar la función cada Tiempo_muestreo ms.
+- Si cambian CPR o R, actualiza los valores en la función (líneas de conversión).
+- Referencia: se convierte de cm/s a cps dentro de la función.
+- Saturación: actuacion = constrain(u[k], -1023, 1023).
