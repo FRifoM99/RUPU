@@ -1,0 +1,216 @@
+%%%%%%%%%%% ------------------------------------------ %%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%% RUPU - COMUNICACION FUNCIONES DE COMUNICACION %%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%% Rev 1.0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%% ------------------------------------------ %%%%%%%%%%%
+
+
+Función:
+ 
+bool iniciar(const char* nombreRed, const char* contrasena, uint16_t miPuerto)
+
+Propósito: Conectar el microcontrolador (ESP32) a la red WiFi y puerto para empezar a recibir mensajes.
+
+Parámetros:
+-nombreRed: El nombre (SSID) de la red WiFi (ej. "iPhone de Kevin").
+-contrasena: La clave de la red WiFi.
+-miPuerto: El puerto local donde este robot esperará mensajes (ej. 1111).
+
+Retorno:
+-true: Si la conexión fue exitosa.
+-false: Si falló la conexión (el robot no podrá comunicarse).
+
+
+%%%%%%%%%%% ------------------------------------------ %%%%%%%%%%%
+
+
+Función: 
+
+void configurarDestinos(const char* ipComputador, uint16_t puertoComputador, const char* ipRobotSiguiente, uint16_t puertoRobotSiguiente)
+
+Propósito: Indicar a quién se le debe enviar mensajes. Define la dirección del "Jefe" (Computador) y del "Compañero" (Robot de atrás).
+
+Parámetros:
+-ipComputador: Dirección IP del PC de monitoreo (ej. "192.168.1.5").
+-puertoComputador: Puerto UDP del PC.
+-ipRobotSiguiente: Dirección IP del robot que viene detrás en el pelotón.
+-puertoRobotSiguiente: Puerto UDP del robot de atrás.
+
+%%% Nota: Si el robot es el último de la fila, la IP del "siguiente" puede ser cualquiera, ya que el mensaje se perderá.
+
+
+%%%%%%%%%%% ------------------------------------------ %%%%%%%%%%%
+
+
+Función: void revisarMensajes()
+
+Propósito: Esta función revisa si ha llegado algún paquete de datos. Si llegó, lo abre, lo lee y guarda la información en las variables internas de la librería.
+
+%%% Nota_1: Debe llamarse al principio de cada ciclo (loop, ciclo_de_control o ciclo_de_inicio) para asegurar que el robot siempre tenga la información más reciente.
+
+%%% Nota_2: Depende de que iniciar() [1ra funcion mencionada en este documento] haya sido ejecutado anteriormente correctamente.
+
+
+%%%%%%%%%%% ------------------------------------------ %%%%%%%%%%%
+
+
+%%% Lectura de datos del Robot Predecesor (Pelotón)
+
+Estas funciones devuelven el estado físico del robot que va adelante.
+
+- float getVelocidadRefDeAdelante(): Velocidad a la que va el líder.
+- float getCurvaturaDeAdelante(): Curvatura de la pista detectada por el líder.
+- bool getPararDeAdelante(): true si el líder se detuvo o se salió de la pista.
+
+%%% Lectura de datos de Configuración (Desde el PC)
+
+Estas funciones devuelven los parámetros de control enviados remotamente para sintonizar el robot en tiempo real.
+
+Generales:
+- getSetting_VelocidadReferencia(): Velocidad objetivo (SetPoint).
+- getSetting_Parar(): Orden de detención de emergencia.
+- getSetting_Calibrar(): Orden para iniciar modo calibración.
+
+Controladores PID:
+
+- getSetting_Kp_velocidad(), Ki, Kd.
+- getSetting_Kp_angulo(), Ki, Kd.
+- getSetting_Kp_distancia(), Ki, Kd.
+- getSetting_Distancia_Referencia() (distancia deseada entre robots).
+
+
+%%%%%%%%%%% ------------------------------------------ %%%%%%%%%%%
+
+
+%%% ENVÍO DE DATOS: Al Robot Siguiente
+
+Función: void enviarEstadoAlRobotSiguiente(bool parar, float velReferencia, float curvatura)
+
+Propósito: Enviar mi estado actual al robot que viene detrás para que él pueda anticiparse (Control Feed-Forward).
+
+Parámetros:
+
+- parar: true si robot se detuvo.
+- velReferencia: La velocidad actual o referencia.
+- curvatura: La curvatura que estoy midiendo.
+
+%%% ENVÍO DE DATOS: Al Monitor/PC
+
+Función: void enviarTelemetria(char etiqueta, unsigned long t, float dist, float d_ref, float v_ref, float v_in, float ang, float out_d, float out_v, float out_th, float curv, float v_crucero, float curv_pred, int ctrl)
+
+Propósito: Enviar un reporte completo de todas las variables internas para graficar en el computador.
+
+Parámetros (en orden):
+
+- etiqueta (char): Nombre del robot ('L', 'R', etc.).
+- t (long): Tiempo del ciclo actual.
+- dist (float): Distancia medida (Sensor ToF).
+- d_ref (float): Distancia referencia.
+- v_ref (float): Velocidad referencia.
+- v_in (float): Velocidad medida (Encoders).
+- ang (float): Ángulo/Posición en la línea.
+- out_d (float): Salida PID distancia.
+- out_v (float): Salida PID velocidad.
+- out_th (float): Salida PID ángulo.
+- curv (float): Curvatura calculada.
+- v_crucero (float): Velocidad crucero configurada.
+- curv_pred (float): Curvatura recibida del predecesor.
+- ctrl (int): Estado del control (flag).
+
+
+%%%%%%%%%%% ------------------------------------------ %%%%%%%%%%%
+
+
+Funciones:
+
+-bool hayMensajeNuevoDeAdelante()
+-bool hayMensajeNuevoDelComputador()
+
+Propósito: Actúan como una notificación. Lo que permite al código principal saber si acaba de llegar un dato nuevo.
+
+Retorno:
+- true: Sí, llegaron datos nuevos (y la bandera se baja automáticamente al leerla).
+- false: No, los datos que tengo son viejos/ya leídos.
+
+
+%%%%%%%%%%% ------------------------------------------ %%%%%%%%%%%
+%%%%%%%%%%% ------------------------------------------ %%%%%%%%%%%
+%%%%%%%%%%% ------------------------------------------ %%%%%%%%%%%
+
+
+Función: 
+
+void _procesarMensaje(int largoPaquete)
+
+Propósito: Lee el paquete UDP recibido, mira la primera letra del mensaje para decidir qué tipo de información es y a qué función especializada enviársela.
+
+Parámetros:
+
+largoPaquete: Número entero que indica cuántos bytes o caracteres tiene el mensaje que acaba de llegar.
+
+%%% Nota: El código usa los siguientes Headers ( palabras clave ) para identificar mensajes:
+
+"L" := Solicitud de estado (Lectura).
+"E" := Escritura de parámetros (Configuración desde el PC).
+"V" := Datos del vehículo predecesor (Robot de adelante).
+
+
+%%%%%%%%%%% ------------------------------------------ %%%%%%%%%%%
+
+
+Función:
+
+void _procesarComandoComputador(int len)
+
+Propósito: Decodifica las instrucciones de configuración enviadas por el computador. El mensaje viene en formato de texto (ej. "/cv_ref/15.5"), esta función separa el nombre de la variable (/cv_ref) del valor numérico (15.5), convirtiéndolo a número (float) y guardándolo en la variable correspondiente.
+
+Parámetros:
+
+len: Longitud del mensaje a procesar.
+
+%%% Nota: Esta función es capaz de modificar en tiempo real:
+
+- Las constantes de todos los PIDs (Velocidad, Ángulo, Distancia).
+- La velocidad de referencia y distancia objetivo.
+- Banderas de control como /parar o /calibrar.
+
+
+%%%%%%%%%%% ------------------------------------------ %%%%%%%%%%%
+
+
+Función: 
+
+void _procesarEstadoRobotAdelante(int len)
+
+Propósito: Interpreta el mensaje de telemetría enviado por el robot que va adelante en el pelotón. Extrae información crítica para evitar choques y coordinar el movimiento.
+
+Parámetros:
+
+len: Longitud del mensaje a procesar.
+
+%%% Nota: El mensaje se "desarma" buscando los separadores "/" para extraer tres datos clave:
+
+- Si el líder paró (PARAR).
+- La velocidad de referencia del líder (refVel).
+- La curvatura de la pista que detectó el líder (CURVA_predecesor).
+
+
+%%%%%%%%%%% ------------------------------------------ %%%%%%%%%%%
+
+
+Función: 
+
+void _procesarSolicitudDeEstado(int len)
+
+Propósito: Responde a preguntas hechas por otros dispositivos. Si recibe el comando correcto (/estado_predecesor), envía inmediatamente un paquete de respuesta al remitente confirmando su estado.
+
+Parámetros:
+
+len: Longitud del mensaje a procesar.
+
+%%% Nota: En esta versión, la función envía una respuesta genérica "V/ok/no/0/0" repetida 3 veces para asegurar que llegue, confirmando que el robot está conectado y escuchando.
+
+
+%%%%%%%%%%% ------------------------------------------ %%%%%%%%%%%
+
+
