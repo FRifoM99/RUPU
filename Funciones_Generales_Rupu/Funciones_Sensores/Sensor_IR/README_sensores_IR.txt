@@ -1,4 +1,4 @@
-Readme - Modelo Sensores_IR 
+Readme - Modulo Sensores_IR 
 
 Este documento describe el funcionamiento del modulo "Sensores_IR", 
 todas las funciones disponibles, la calibracion y las dependencias necesarias.
@@ -86,6 +86,7 @@ con los encoders y motores, se encuentran en la funcion principal.
 en la libreria sensores_IR_3.3.1.h, el otro .h de la libreria que se encarga de los motores y encoders)
 
  
+
 
 
 
