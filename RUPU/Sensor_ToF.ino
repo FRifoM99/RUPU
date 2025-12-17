@@ -13,8 +13,6 @@ void configurarSensorToF(){
 
 double leerDistancia(){ 
   double distanciaCm = sensor.readRangeContinuousMillimeters() * 0.1 - OFFSET_SENSOR_CM;
-  if(distanciaCm > DISTANCIA_MAXIMA_CM) {  
-    distanciaCm = DISTANCIA_MAXIMA_CM;
-  }
+  if(distanciaCm > DISTANCIA_MAXIMA_CM) distanciaCm = DISTANCIA_MAXIMA_CM;
   return distanciaCm;
 }
